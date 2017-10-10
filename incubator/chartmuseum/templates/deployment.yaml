@@ -13,9 +13,16 @@ spec:
         app: {{ template "common.name" . }}
         release: {{ .Release.Name | quote }}
     spec:
+{{- if eq $.Values.storage "google" }}
+      volumes:
+      - name: credentials-volume
+        configMap:
+          name: {{ $.Chart.Name }}-{{ $.Release.Name }}-credentials
+{{- else if eq $.Values.storage "local" }}
       volumes:
       - name: storage-volume
         emptyDir: {}
+{{- end }}
       containers:
       - name: {{ .Chart.Name }}
         image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
@@ -23,9 +30,14 @@ spec:
         args:
         - --port={{ .Values.service.internalPort }}
         - --debug
+{{- if eq $.Values.storage "google" }}
         - --storage=google
         - --storage-google-bucket={{ .Values.googleCloudStorageBucket }}
         - --storage-google-prefix={{ .Values.googleCloudStoragePrefix }}
+{{- else if eq $.Values.storage "local" }}
+        - --storage=local
+        - --storage-local-rootdir=/storage
+{{- end }}
         ports:
         - containerPort: {{ .Values.service.internalPort }}
         # livenessProbe:
@@ -45,11 +57,8 @@ spec:
         volumeMounts:
         - name: credentials-volume
           mountPath: /etc/credentials
-      volumes:
-      - name: credentials-volume
-        configMap:
-          name: {{ $.Chart.Name }}-{{ $.Release.Name }}-credentials
+{{- else if eq $.Values.storage "local" }}
+        volumeMounts:
+        - mountPath: /storage
+          name: storage-volume
 {{- end }}
-        # volumeMounts:
-        # - mountPath: /storage
-        #   name: storage-volume
