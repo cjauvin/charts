@@ -23,20 +23,33 @@ spec:
         args:
         - --port={{ .Values.service.internalPort }}
         - --debug
-        - --storage=local
-        - --storage-local-rootdir=/storage
+        - --storage=google
+        - --storage-google-bucket={{ .Values.googleCloudStorageBucket }}
+        - --storage-google-prefix={{ .Values.googleCloudStoragePrefix }}
         ports:
         - containerPort: {{ .Values.service.internalPort }}
-        livenessProbe:
-          httpGet:
-            path: /index.yaml
-            port: {{ .Values.service.internalPort }}
-        readinessProbe:
-          httpGet:
-            path: /index.yaml
-            port: {{ .Values.service.internalPort }}
-        volumeMounts:
-        - mountPath: /storage
-          name: storage-volume
+        # livenessProbe:
+        #   httpGet:
+        #     path: /index.yaml
+        #     port: {{ .Values.service.internalPort }}
+        # readinessProbe:
+        #   httpGet:
+        #     path: /index.yaml
+        #     port: {{ .Values.service.internalPort }}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
+{{- if eq $.Values.storage "google" }}
+        env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/credentials/gke-credentials.json"
+        volumeMounts:
+        - name: credentials-volume
+          mountPath: /etc/credentials
+      volumes:
+      - name: credentials-volume
+        configMap:
+          name: {{ $.Chart.Name }}-{{ $.Release.Name }}-credentials
+{{- end }}
+        # volumeMounts:
+        # - mountPath: /storage
+        #   name: storage-volume

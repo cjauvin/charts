@@ -1,7 +1,7 @@
 replicaCount: 1
 image:
   repository: chartmuseum/chartmuseum
-  tag: v0.1.0
+  tag: v0.2.0
   pullPolicy: IfNotPresent
 service:
   type: ClusterIP
@@ -14,3 +14,7 @@ resources:
   requests:
     cpu: 80m
     memory: 64Mi
+
+storage: "google"
+googleCloudStoragePrefix: ""
+googleCloudStorageBucket: "fleet-chartmuseum"
